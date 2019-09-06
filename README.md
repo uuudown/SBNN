@@ -9,8 +9,7 @@ computation and significantly reduced memory access/storage cost. In addition, i
 To tackle (iii), we propose intra- and inter-layer fusion techniques so
 that the entire BNN inference execution can be packed into a single
 GPU kernel, and so avoid the high-cost of frequent launching and
-releasing. Experiments show that our Singular-Binarized-NeuralNetwork
-(SBNN) design can achieve over 1000× speedup for raw inference latency over the state-of-the-art full-precision BNN inference for AlexNet on GPUs. Comparisons with CPU, GPU, FPGA and Xeon-Phi demonstrate the effectiveness of our design. 
+releasing. 
 
 **Data Input** We tested SBNN on MNIST (http://yann.lecun.com/exdb/mnist/), CIFAR-10 (https://www.cs.toronto.edu/~kriz/cifar.html) and ImageNet (http://www.image-net.org/). We provide C++ based image reading and preprocessing (e.g., for imageNet, we do RGB channel normalization, rescaling smaller edge to 256 and central-crop to 224x224) functions for reading images from the three datasets. We validated the correctness by comparing the RGB normalized floating-point values with PyTorch. See data.h and data.cpp for details. We provide "process_one_image.py" to show the results for ImageNet image reading to verify the data reading interface. We provide "process\_imagenet\_file.py" to adjust the path for loading the images.
 
