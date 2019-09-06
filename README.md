@@ -1,6 +1,6 @@
 # SBNN: Singular Binarized Neural Network based on GPU Bit Operations
 
-This is the code repository for our SuperComputig (SC-19) paper. The code is developed by **Ang Li** from the HPC group of Pacific Northwest National Laboratory (PNNL). 
+This is the code repository for our SuperComputig (SC-19) paper. The code is developed by **Ang Li** from the HPC group of Pacific Northwest National Laboratory (PNNL). Please see my homepage:www.angliphd.com. 
 
 *Ang Li, Tong Geng, Tianqi Wang, Martin Herbordt, Shuaiwen Leon Song, and Kevin Barker.2019.BSTC: A Novel Binarized-Soft-Tensor-Core Design for Accelerating Bit-Based Approximated Neural Nets. The International Conference for High Performance Computing, Networking, Storage, and Analysis (SC'19), November 17-22, 2019, Denver, CO, USA. ACM, New York, NY, USA, 14 pages. https://doi.org/10.1145/3295500.3356169*
 
@@ -25,5 +25,5 @@ releasing. Experiments show that our Singular-Binarized-NeuralNetwork
 **Run** Just execute the binary generated. To switch between SBNN32 and SBNN64, modify the corresponding source file and use "main32()" or "main64" in the main function. You may also need to set the GPU device number, the data file path, the model configuration file path in the source file for proper execution. We use cudaEvent to measure the time. We report Top-1 and Top-5 inference accuracy for the current batch. We tested the code on NVIDIA P100 DGX-1 and V100 DGX-1 systems.
 
 **Acknowledgement** 
-This research is mainly supported by PNNL's DeepScience-HPC LDRD project. I specially thank Dr. Courtney Corley and Dr. Nathan Hodas for their support on this work. This code is also partially supported by PNNL's DMC-CFA LDRD project, DOE ASCR CENATE - Center for Advanced Architecture Evaluation project, and PNNL's High Performance Data Analytics (HPDA) program.
+This research is mainly supported by PNNL's DeepScience-HPC LDRD project. I would specially thank Dr. Courtney Corley and Dr. Nathan Hodas for their support on this work. This code is also partially supported by PNNL's DMC-CFA LDRD project, DOE ASCR CENATE - Center for Advanced Architecture Evaluation project, and PNNL's High Performance Data Analytics (HPDA) program.
 
