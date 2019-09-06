@@ -1,6 +1,6 @@
 # SBNN: Singular Binarized Neural Network based on GPU Bit Operations
 
-This is the code repository for our SuperComputig (SC-19) paper. The code is developed by **Ang Li** from the HPC group of Pacific Northwest National Laboratory (PNNL). Please see my homepage:www.angliphd.com. 
+This is the code repository for our SuperComputig (SC-19) paper. Please see my homepage:www.angliphd.com. The code is developed by **Ang Li** from the HPC group of Pacific Northwest National Laboratory (PNNL). 
 
 *Ang Li, Tong Geng, Tianqi Wang, Martin Herbordt, Shuaiwen Leon Song, and Kevin Barker.2019.BSTC: A Novel Binarized-Soft-Tensor-Core Design for Accelerating Bit-Based Approximated Neural Nets. The International Conference for High Performance Computing, Networking, Storage, and Analysis (SC'19), November 17-22, 2019, Denver, CO, USA. ACM, New York, NY, USA, 14 pages. https://doi.org/10.1145/3295500.3356169*
 
