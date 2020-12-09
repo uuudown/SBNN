@@ -32,7 +32,7 @@ __device__ __inline__ void In32Layer(In32LayerParam* p)
         {
             float f0 = ( (by*32+laneid<(p->input_width)) && (bx*32+i<(p->input_height)) )?
                 p->input_gpu[(bx*32+i)*(p->input_width)+by*32 +laneid]:-1.0f;
-            unsigned r0 = __brev(__ballot(f0>=0?1:0));
+            unsigned r0 = __brev(__ballot_sync(0xFFFFFFFF, f0>=0?1:0));
             if (laneid == i) val = r0;
         }
         if (laneid < (p->input_height)*(p->input_width))
@@ -61,7 +61,7 @@ __device__ __inline__ void In32LayerBatched(In32LayerParam* p)
         const unsigned bx = bid / (32 * gdy);
         float f0 = ( (by*32+laneid<(p->input_width)) && (bx*32+wid<(p->input_height)) )?
             p->input_gpu[(bx*32+wid)*(p->input_width)+by*32 +laneid]:-1.0f;
-        unsigned r0 = __brev(__ballot(f0>=0?1:0));
+        unsigned r0 = __brev(__ballot_sync(0xFFFFFFFF, f0>=0?1:0));
         if (laneid==0)
             p->output_gpu[by*gdx*32+bx*32+wid] = r0;
     }
@@ -94,7 +94,7 @@ __device__ __inline__ void Fc32Layer(Fc32LayerParam* p)
             #pragma unroll
             for (int j=0; j<32; j++)
             {
-                unsigned r2 = __shfl(r1, j); //from lane-j, r1 of weight matrix
+                unsigned r2 = __shfl_sync(0xFFFFFFFF, r1, j); //from lane-j, r1 of weight matrix
                 Cm[j] += __popc(r0 ^ r2);
             }
         }
@@ -143,7 +143,7 @@ __device__ __inline__ void Fc32LayerBatched(Fc32LayerParam* p)
             unsigned r1 = weight_sub[i*32*gdy+laneid];
             C += __popc(r0 ^ r1);
         }
-        unsigned r2 = __ballot((((float)p->input_width)-2*(float)C <(p->bn_gpu[by*32+laneid]))?0:1);
+        unsigned r2 = __ballot_sync(0xFFFFFFFF, (((float)p->input_width)-2*(float)C <(p->bn_gpu[by*32+laneid]))?0:1);
         output_sub[wid] = __brev(r2);
     }
 }
@@ -176,7 +176,7 @@ __device__ __inline__ void Out32Layer(Out32LayerParam* p)
             #pragma unroll
             for (int j=0; j<32; j++)
             {
-                unsigned r2 = __shfl(r1, j); //from lane-j, r1 of weight matrix
+                unsigned r2 = __shfl_sync(0xFFFFFFFF, r1, j); //from lane-j, r1 of weight matrix
                 Cm[j] += __popc(r0 ^ r2);
             }
         }
@@ -315,7 +315,7 @@ __device__ __inline__ void In32Conv32Layer(In32Conv32LayerParam* p)
         {
             // save shape[batch, output_height, output_width, out_channels/32]
             bool bin = (Csub[k*32+laneid])<(p->bn_gpu)[k*32+laneid]?0:1;
-            unsigned C = __brev(__ballot(bin));
+            unsigned C = __brev(__ballot_sync(0xFFFFFFFF,bin));
             //If FC layer follows, store in column-major
             if (p->output_transpose)
             {
@@ -409,8 +409,8 @@ __device__ __inline__ void In32ConvPool32Layer(In32Conv32LayerParam* p)
         for (int k=0; k<ots; k++)
         {
             // save shape[batch, output_height, output_width, out_channels/32]
-            bool bin = (float)(Csub[k*32+laneid])<(p->bn_gpu)[k*32+laneid]?0:1;
-            unsigned C = __brev(__ballot(bin));
+            bool bin = ((float)(Csub[k*32+laneid]))<(p->bn_gpu)[k*32+laneid]?0:1;
+            unsigned C = __brev(__ballot_sync(0xFFFFFFFF, bin));
             //If FC layer follows, store in column-major
             if (p->output_transpose)
             {
@@ -530,7 +530,7 @@ __device__ __inline__ void Conv32Layer(Conv32LayerParam* p)
 
             }
              
-            unsigned C = __brev(__ballot((float)res<(p->bn_gpu)[k*32+laneid]?0:1));
+            unsigned C = __brev(__ballot_sync(0xFFFFFFFF, (float)res<(p->bn_gpu)[k*32+laneid]?0:1));
             if (p->output_transpose) //If FC layer follows, store in column-major
             {
                 p->output_gpu[(((by*p->output_width)+bx)*ots+k)*FEIL(p->batch)+bz] = C;
@@ -653,7 +653,7 @@ __device__ __inline__ void ConvPool32Layer(Conv32LayerParam* p)
                 }
             }
 
-            unsigned C = __brev(__ballot((float)res< ((p->bn_gpu)[k*32+laneid])?0:1));
+            unsigned C = __brev(__ballot_sync(0xFFFFFFFF, (float)res< ((p->bn_gpu)[k*32+laneid])?0:1));
             if (p->output_transpose) //If FC layer follows, store in column-major
             {
                 //For Tensorflow (HWCN)

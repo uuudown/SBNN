@@ -52,7 +52,7 @@ __global__ void UnpackFcOutput32(const unsigned* __restrict__  A, float* B,
     #pragma unroll
     for (int i=0; i<32; i++) 
     {
-        unsigned r0 = __shfl(Aval, i); //from lane-i
+        unsigned r0 = __shfl_sync(0xFFFFFFFF, Aval, i); //from lane-i
         if ((32*bx+i)<A_height && by*32+laneid<A_width)
         {
             B[(32*bx+i)*A_width+by*32+laneid] =  2*(float)((r0>>(31-laneid)) & 0x1)-1;
@@ -82,7 +82,7 @@ __global__ void PackFiltersByOutChannels32(const float* __restrict__ filter,
         // From shape[filter_height, filter_width, in_channels, out_channels] 
         float f0 = ((k*32+laneid)<out_channels)? filter[bx*in_channels*out_channels 
             + by*out_channels + k*32 + laneid]:0;
-        unsigned r0 = __brev(__ballot(f0>=0));
+        unsigned r0 = __brev(__ballot_sync(0xFFFFFFFF, f0>=0));
         // To shape[filter_height, filter_width, in_channels, out_channels/32]
         filter_binarized[bx*ots*in_channels+ by*ots + k] = r0;
     }
@@ -138,7 +138,7 @@ __global__ void PackFiltersByInChannels32(const float* __restrict__ filter,
         // From shape[filter_height, filter_width, in_channels, out_channels] 
         float f0 = ((c*32+laneid)<in_channels)? filter[bx*in_channels*out_channels 
             + (c*32+laneid)*out_channels + by]:0;
-        unsigned r0 = __brev(__ballot(f0>=0));
+        unsigned r0 = __brev(__ballot_sync(0xFFFFFFFF, f0>=0));
         //if (laneid == 0) //avoid warp conflict
         // To shape[filter_height, filter_width, in_channels/32, out_channels]
         filter_binarized[bx*ins*out_channels+ c*out_channels + by] = r0;

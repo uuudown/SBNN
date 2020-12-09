@@ -33,8 +33,8 @@ __device__ __inline__ void In64Layer(In64LayerParam* p)
                 p->input_gpu[(bx*32+i)*(p->input_width)+by*64 +laneid]:-1.0f;
             float f1 = ( (by*64+32+laneid<(p->input_width)) && (bx*32+i<(p->input_height)) )?
                 p->input_gpu[(bx*32+i)*(p->input_width)+by*64 + 32 + laneid]:-1.0f;
-            unsigned r0 = __ballot(f0>=0?1:0);
-            unsigned r1 = __ballot(f1>=0?1:0);
+            unsigned r0 = __ballot_sync(0xFFFFFFFF, f0>=0?1:0);
+            unsigned r1 = __ballot_sync(0xFFFFFFFF, f1>=0?1:0);
             ullong l0;
             asm volatile("mov.b64 %0, {%1,%2};":"=l"(l0):"r"(r0),"r"(r1));//lo,hi
             if (laneid == i) val = __brevll(l0);
@@ -68,8 +68,8 @@ __device__ __inline__ void In64LayerBatched(In64LayerParam* p)
             p->input_gpu[(bx*32+wid)*(p->input_width)+by*64 +laneid]:-1.0f;
         float f1 = ( (by*64+32+laneid<(p->input_width)) && (bx*32+wid<(p->input_height)) )?
             p->input_gpu[(bx*32+wid)*(p->input_width)+by*64 + 32 + laneid]:-1.0f;
-        unsigned r0 = __ballot(f0>=0?1:0);
-        unsigned r1 = __ballot(f1>=0?1:0);
+        unsigned r0 = __ballot_sync(0xFFFFFFFF, f0>=0?1:0);
+        unsigned r1 = __ballot_sync(0xFFFFFFFF, f1>=0?1:0);
         ullong l0;
         asm volatile("mov.b64 %0, {%1,%2};":"=l"(l0):"r"(r0),"r"(r1));//lo,hi
         if (laneid==0)
@@ -105,8 +105,8 @@ __device__ __inline__ void Fc64Layer(Fc64LayerParam* p)
             ullong b1 = weight_sub[i*64*gdy+32+laneid];
             for (int j=0; j<32; j++)
             {
-                ullong l0 = __shfl(b0,j);
-                ullong l1 = __shfl(b1,j);
+                ullong l0 = __shfl_sync(0xFFFFFFFF, b0, j);
+                ullong l1 = __shfl_sync(0xFFFFFFFF, b1, j);
                 Cm[j] += (__popcll(a0^l0)<<16) + __popcll(a1^l0);
                 Cm[32+j] += (__popcll(a0^l1)<<16) + __popcll(a1^l1);
             }
@@ -168,10 +168,10 @@ __device__ __inline__ void Fc64LayerBatched(Fc64LayerParam* p)
             c2 += __popcll(a0 ^ b1);
             c3 += __popcll(a1 ^ b1);
         }
-        unsigned r0 = __ballot(((((float)p->input_width)-2*(float)c0)<(p->bn_gpu[by*64+laneid]))?0:1);
-        unsigned r1 = __ballot(((((float)p->input_width)-2*(float)c2)<(p->bn_gpu[by*64+32+laneid]))?0:1);
-        unsigned r2 = __ballot(((((float)p->input_width)-2*(float)c1)<(p->bn_gpu[by*64+laneid]))?0:1);
-        unsigned r3 = __ballot(((((float)p->input_width)-2*(float)c3)<(p->bn_gpu[by*64+32+laneid]))?0:1);
+        unsigned r0 = __ballot_sync(0xFFFFFFFF, ((((float)p->input_width)-2*(float)c0)<(p->bn_gpu[by*64+laneid]))?0:1);
+        unsigned r1 = __ballot_sync(0xFFFFFFFF, ((((float)p->input_width)-2*(float)c2)<(p->bn_gpu[by*64+32+laneid]))?0:1);
+        unsigned r2 = __ballot_sync(0xFFFFFFFF, ((((float)p->input_width)-2*(float)c1)<(p->bn_gpu[by*64+laneid]))?0:1);
+        unsigned r3 = __ballot_sync(0xFFFFFFFF, ((((float)p->input_width)-2*(float)c3)<(p->bn_gpu[by*64+32+laneid]))?0:1);
         ullong l0,l1;
         asm volatile("mov.b64 %0, {%1,%2};":"=l"(l0):"r"(r0),"r"(r1));//lo,hi
         asm volatile("mov.b64 %0, {%1,%2};":"=l"(l1):"r"(r2),"r"(r3));//lo,hi
@@ -210,8 +210,8 @@ __device__ __inline__ void Out64Layer(Out64LayerParam* p)
             #pragma unroll
             for (int j=0; j<32; j++)
             {
-                ullong l0 = __shfl(b0,j);
-                ullong l1 = __shfl(b1,j);
+                ullong l0 = __shfl_sync(0xFFFFFFFF,b0,j);
+                ullong l1 = __shfl_sync(0xFFFFFFFF,b1,j);
                 Cm[j] += (__popcll(a0^l0)<<16) + __popcll(a1^l0);
                 Cm[32+j] += (__popcll(a0^l1)<<16) + __popcll(a1^l1);
             }
@@ -410,8 +410,8 @@ __device__ __inline__ void In32Conv64Layer(In32Conv64LayerParam* p)
             // save shape[batch, output_height, output_width, out_channels/64]
             bool b0 = (Csub[k*64+laneid])<(p->bn_gpu)[k*64+laneid]?0:1;
             bool b1 = (Csub[k*64+32+laneid])<(p->bn_gpu)[k*64+32+laneid]?0:1;
-            unsigned r0 = __ballot(b0);
-            unsigned r1 = __ballot(b1);
+            unsigned r0 = __ballot_sync(0xFFFFFFFF, b0);
+            unsigned r1 = __ballot_sync(0xFFFFFFFF, b1);
             ullong l0;
             asm volatile("mov.b64 %0, {%1,%2};":"=l"(l0):"r"(r0),"r"(r1)); //(low,high)
             ullong C = __brevll(l0);
@@ -516,8 +516,8 @@ __device__ __inline__ void In32ConvPool64Layer(In32Conv64LayerParam* p)
             // save shape[batch, output_height, output_width, out_channels/64]
             bool b0 = (Csub[k*64+laneid])<(p->bn_gpu)[k*64+laneid]?0:1;
             bool b1 = (Csub[k*64+32+laneid])<(p->bn_gpu)[k*64+32+laneid]?0:1;
-            unsigned r0 = __ballot(b0);
-            unsigned r1 = __ballot(b1);
+            unsigned r0 = __ballot_sync(0xFFFFFFFF, b0);
+            unsigned r1 = __ballot_sync(0xFFFFFFFF, b1);
             ullong l0;
             asm volatile("mov.b64 %0, {%1,%2};":"=l"(l0):"r"(r0),"r"(r1)); //(low,high)
             ullong C = __brevll(l0);
@@ -668,8 +668,8 @@ __device__ __inline__ void Conv64Layer(Conv64LayerParam* p)
 
             }
 
-            unsigned r0 = __ballot(((float)a0<(p->bn_gpu)[k*64+laneid])?0:1);
-            unsigned r1 = __ballot(((float)a1<(p->bn_gpu)[k*64+32+laneid])?0:1);
+            unsigned r0 = __ballot_sync(0xFFFFFFFF, ((float)a0<(p->bn_gpu)[k*64+laneid])?0:1);
+            unsigned r1 = __ballot_sync(0xFFFFFFFF, ((float)a1<(p->bn_gpu)[k*64+32+laneid])?0:1);
 
             //////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             ////bool b0 = ((k*64+laneid>=(p->output_channels)) |  
@@ -844,8 +844,8 @@ __device__ __inline__ void ConvPool64Layer(Conv64LayerParam* p)
 
             }
 
-            unsigned r0 = __ballot(((float)a0<(p->bn_gpu)[k*64+laneid])?0:1);
-            unsigned r1 = __ballot(((float)a1<(p->bn_gpu)[k*64+32+laneid])?0:1);
+            unsigned r0 = __ballot_sync(0xFFFFFFFF, ((float)a0<(p->bn_gpu)[k*64+laneid])?0:1);
+            unsigned r1 = __ballot_sync(0xFFFFFFFF, ((float)a1<(p->bn_gpu)[k*64+32+laneid])?0:1);
             ullong l0;
             asm volatile("mov.b64 %0, {%1,%2};":"=l"(l0):"r"(r0),"r"(r1)); //(low,high)
             ullong C = __brevll(l0);

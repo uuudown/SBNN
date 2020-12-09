@@ -55,8 +55,8 @@ __global__ void UnpackFcOutput64(const ullong* __restrict__ A, float* B,
     #pragma unroll
     for (int i=0; i<32; i++)
     {
-        unsigned r2 = __shfl(r0, i); //from lane-i, only 32-bit shuffle is allowed
-        unsigned r3 = __shfl(r1, i); //r2 left, r3 right
+        unsigned r2 = __shfl_sync(0xFFFFFFFF, r0, i); //from lane-i, only 32-bit shuffle is allowed
+        unsigned r3 = __shfl_sync(0xFFFFFFFF, r1, i); //r2 left, r3 right
         if ((32*bx+i)<A_height)
         {
             if (by*64+laneid < A_width)
@@ -85,8 +85,8 @@ __global__ void PackFiltersByOutChannels64(const float* __restrict__ filter,
             + by*out_channels + k*64 + laneid]:0;
         float f1 = ((k*64+32+laneid)<out_channels)? filter[bx*in_channels*out_channels 
             + by*out_channels + k*64 + 32 + laneid]:0;
-        unsigned r0 = __ballot(f0>=0);
-        unsigned r1 = __ballot(f1>=0);
+        unsigned r0 = __ballot_sync(0xFFFFFFFF, f0>=0);
+        unsigned r1 = __ballot_sync(0xFFFFFFFF, f1>=0);
         ullong l0;
         asm volatile("mov.b64 %0, {%1,%2};":"=l"(l0):"r"(r0),"r"(r1)); //(low,high)
         // To shape[filter_height, filter_width, in_channels, out_channels/64]
@@ -140,8 +140,8 @@ __global__ void PackFiltersByInChannels64(const float* __restrict__ filter,
             filter[bx*in_channels*out_channels + (c*64+laneid)*out_channels + by]:-1.0f;
         float f1 = ((c*64+32+laneid)<in_channels)? 
             filter[bx*in_channels*out_channels + (c*64+32+laneid)*out_channels + by]:-1.0f;
-        unsigned r0 = __ballot(f0>=0);
-        unsigned r1 = __ballot(f1>=0);
+        unsigned r0 = __ballot_sync(0xFFFFFFFF, f0>=0);
+        unsigned r1 = __ballot_sync(0xFFFFFFFF, f1>=0);
         unsigned long long l0;
         asm volatile("mov.b64 %0, {%1,%2};":"=l"(l0):"r"(r0),"r"(r1)); //(low,high)
         filter_binarized[bx*ins*out_channels+ c*out_channels + by] = __brevll(l0);
